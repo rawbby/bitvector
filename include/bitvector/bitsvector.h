@@ -2,6 +2,7 @@
 #define BITS_VECTOR_H
 
 #include "bitvector.h"
+#include "util/sanity.h"
 
 /** only for elements with less or equal to 64 bits */
 class BitsVector
@@ -15,25 +16,29 @@ public:
     : m_data(size * element_bits)
     , m_element_bits(element_bits)
   {
+    DEBUG_ASSERT(element_bits <= 64);
   }
 
   explicit BitsVector(std::size_t element_bits)
     : m_data()
     , m_element_bits(element_bits)
   {
+    DEBUG_ASSERT(element_bits <= 64);
   }
 
   BitsVector(const BitsVector& bit_vector) = default;
 
   BitsVector(BitsVector&& bit_vector) noexcept
-    : m_data(std::move(bit_vector.m_data))
+    : m_data(bit_vector.m_data)
     , m_element_bits(bit_vector.m_element_bits)
   {
   }
 
-  BitsVector& operator=(const BitsVector&) = default;
-
-  BitsVector& operator=(BitsVector&&) noexcept = default;
+  BitsVector& operator=(BitsVector bits_vector) {
+    m_element_bits = bits_vector.m_element_bits;
+    m_data = std::move(bits_vector.m_data);
+    return *this;
+  }
 
 public:
   void inline push(auto value)

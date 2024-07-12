@@ -6,14 +6,34 @@
 #include <type_traits>
 
 class CBit;
+class Bit;
+
 class CBits;
+class Bits;
+
+class CBitVector;
 class BitVector;
 
-template<typename T>
-concept IsIntegral = std::is_integral_v<T> || std::is_base_of_v<CBit, T> || std::is_base_of_v<CBits, T>;
+class CBitsVector;
+class BitsVector;
 
 template<typename T>
-concept IsUnsigned = std::is_unsigned_v<T> || std::is_base_of_v<CBit, T> || std::is_base_of_v<CBits, T>;
+concept IsBit = std::is_base_of_v<CBit, T>;
+
+template<typename T>
+concept IsBits = std::is_base_of_v<CBits, T>;
+
+template<typename T>
+concept IsBitVector = std::is_base_of_v<CBitVector, T>;
+
+template<typename T>
+concept IsBitsVector = std::is_base_of_v<CBitsVector, T>;
+
+template<typename T>
+concept IsIntegral = std::is_integral_v<T> || IsBit<T> || IsBits<T>;
+
+template<typename T>
+concept IsUnsigned = std::is_unsigned_v<T> || IsBit<T> || IsBits<T>;
 
 template<typename T>
 concept IsSigned = !IsUnsigned<T>;

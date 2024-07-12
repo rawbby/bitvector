@@ -1,172 +1,174 @@
-Project Advanced Datastructures SS 2024
-=======================================
+# Project Advanced Data Structures SS 2024
 
-Autor: Robert Andreas Fritsch
-Date 12.06.2024
+## Author: Robert Andreas Fritsch
 
-Utilities
----------
+### Date: 12.06.2024
+
+---
+
+## Overview
+
+This report provides a comprehensive overview of the advanced data structures implemented for the SS 2024 project. The
+focus is on bit manipulation, specifically the development and enhancement of bit containers, and the implementation of
+rank and select queries.
+
+---
+
+## Utilities
 
 ### Math Wrapper
 
-In the header scr/util.h you can find wrapper around some basic math functionalities used all over the Project.
+The header `scr/util.h` contains wrappers around basic math functionalities used throughout the project.
 
 ### BitVector
 
-I designed a basic bit container ```BitVector``` with ```std::vector<std::uint64_t>```.
-This container does not yet support rank and select queries but only access and manipulation.
-
-Further more i designed a ```BitsVector``` that uses the Bit vector as a base to store n-bit elements.
-
-Both of these classes support operations like access, push, size _(number of elements)_, bits _(number of bits
-allocated)_, ...
+I designed a basic bit container `BitVector` using `std::vector<std::uint64_t>`. This container supports access and
+manipulation but does not yet include rank and select queries. Additionally, I designed a `BitsVector` that uses
+the `BitVector` to store n-bit elements. Both classes support operations such as access, push, size (number of
+elements), and bits (number of bits allocated).
 
 ### Rank and Select
 
-To use rank and select queries a so called accessor is used. It takes implementations of specific Rank and Select
-Accelerators to allow rank and select queries.
-This Project has implemented the following Rank and Select Accelerators:
+To enable rank and select queries, an accessor is used. This accessor utilizes specific Rank and Select Accelerators.
+The project implements the following accelerators:
 
-1. LinearRank
-2. ConstRank
-3. LinearSelect
-4. ConstSelect (almost working)
+1. `LinearRank`
+2. `ConstRank`
+3. `LinearSelect`
+4. `ConstSelect` (partially working)
 
-### Main method
+---
 
-The main method parses the file1 and runs the operations with either ```BitVectorAccessor<LinearRank, LinearSelect>``` (
-if a third parameter is given) or  ```BitVectorAccessor<ConstRank, LinearSelect>```. The result is written into file2
-and statistics are printed to stdout.
+## Main Method
 
-Everything like described in the project description. It is to mention that the parsing is done without any checks.
-It i certain, that the program will either not recognize a corrupt file or crash fatally without info.
-This Program relies on non-corrupt input files.
+The main method parses `file1` and performs operations using either `BitVectorAccessor<LinearRank, LinearSelect>` (if a
+third parameter is provided) or `BitVectorAccessor<ConstRank, LinearSelect>`. The results are written to `file2`, and
+statistics are printed to stdout. Note that parsing is done without any checks, so the program assumes non-corrupt input
+files.
 
-### Implementation
+---
 
-#### LinearRank and LinearSelect
+## Implementation
 
-The ```LinearRank``` and ```LinearSelect``` are implemented trivially but for very small bit vectors (< ~20000 elements)
-they are very efficient.
+### LinearRank and LinearSelect
 
-#### ConstRank
+The `LinearRank` and `LinearSelect` are implemented trivially but are efficient for small bit vectors (< ~20000
+elements).
 
-The ```ConstRank``` is the most complete advanced technique used in the project and result in high performant and
-correct answers.
-The specific tuning parameters try to be close to the theory but are chosen to be more practical in reality at some
-point:
+### ConstRank
 
-One fill sample of chosen parameters vs theory parameter:
+The `ConstRank` is the most advanced technique implemented in this project, providing high performance and correct
+answers. Tuning parameters were selected to balance theoretical ideals and practical considerations:
 
-```
-theory bits               : 1.67772e+07
-real   bits               : 16777216
-theory s_block_bits       : 576
-real   s_block_bits       : 504
-theory s_block_count      : 29127.1
-real   s_block_count      : 33289
-theory s_block_elem_size  : 25
-real   s_block_elem_size  : 25
-theory block_bits         : 12
-real   block_bits         : 12
-theory block_count_per_sb : 48
-real   block_count_per_sb : 42
-theory block_count_total  : 1.3981e+06
-real   block_count_total  : 1398138
-theory block_elem_size    : 10.1699
-real   block_elem_size    : 9
-theory block_data_bits    : 1.42186e+07
-real   block_data_bits    : 12583242
-theory s_block_data_bits  : 728178
-real   s_block_data_bits  : 832225
-```
+| Parameter          | Theory Value | Real Value |
+|--------------------|--------------|------------|
+| theory bits        | 1.67772e+07  | 16777216   |
+| s_block_bits       | 576          | 504        |
+| s_block_count      | 29127.1      | 33289      |
+| s_block_elem_size  | 25           | 25         |
+| block_bits         | 12           | 12         |
+| block_count_per_sb | 48           | 42         |
+| block_count_total  | 1.3981e+06   | 1398138    |
+| block_elem_size    | 10.1699      | 9          |
+| block_data_bits    | 1.42186e+07  | 12583242   |
+| s_block_data_bits  | 728178       | 832225     |
 
-The exact choices are:
+The exact choices for these parameters are based on the following calculations:
 
-```
+```cpp
 block_bits = Max(1, Log2Half(n));
 s_block_bits = FloorX(Max(block_bits + 1, NearestPower2(Log2Pow2(n))) - 1, block_bits);
-
 block_count_per_sb = s_block_bits / block_bits;
 s_block_count = CeilDiv(n, s_block_bits);
 block_count_total = s_block_count * block_count_per_sb;
-
 block_elem_size = (Log2(s_block_bits) + 1);
 s_block_elem_size = (Log2(n) + 1);
-
 block_data_bits = block_elem_size * block_count_total;
 s_block_data_bits = s_block_elem_size * s_block_count;
 ```
 
-I did not have the time yet to check if the sizes are solid due to time constraints but for me personally the amount of
-bits used by the accelerator are a bit high. Maybe I find the reason for that in the next days.
+Due to time constraints, I haven't fully verified the sizes, but initial observations suggest that the amount of bits
+used by the L1 are a bit high. ConstRank constructs its accelerator structures in linear time and is very fast.
 
-ConstRank constructs its Accelerator structures in linear time and is very fast.
+### ConstSelect / BetterSelect
 
-#### ConstSelect
+`ConstSelect`/`BetterSelect` is not fully implemented yet. Currently, `ConstSelect` supports the first Layer of the
+lookup. This however provides only a small speedup for small instances compared to the linear case, but works better for
+bigger instances. The implementation so far is very close to theory. So a comparison is not of a bigger interest.
 
-I have not finished ```ConstSelect```. It works for almost all queries but when doing fuzz testing and comparing the
-results to the LinearSelect in few corner cases the result is wrong.
-As ```ConstSelect``` is Work in progress select0 and select1 are not equally implemented.
+---
 
-If you have a look please focus on select0.
+## Results
 
-### Results
+### Size Overhead of the Accelerator Data Structures
 
-#### Size Overhead of the Accelerator Data Structures
+![Size Overhead](bitvector-sizes-all.png)
 
-![](bitvector-sizes-all.png)
+The space overhead is linear, as expected.
 
-We can see that the space overhead is in fact linear.
+### Performance Comparison between Variants
 
-#### Performance Comparison between Variants
+![Performance Comparison](bitvector-times-all.png)
 
-![](bitvector-times-all.png)
+The speedup is significant. However, since `ConstSelect` is not fully implemented, I cannot guarantee its performance
+for larger bit vectors or its correctness, but the initial results are promising.
 
-We can see that the speedup is greatly improved. As ConstSelect is not fully implemented I can not guaranty that it will
-keep performance for bigger bit vectors nor that it is yet correct but till here it look pretty good.
+---
 
-### Observations
+## Observations
 
-For BitVectors of length ```n < 2^16``` a L1 Block can never be sparse as:
+For BitVectors of length `n < 2^16`, an L1 Block can never be sparse because:
 
 ```
 |B| >= log2(n)^4 -> "B is sparse"
 ```
 
-but as ```n >= |B|```, a sparse block can only exist if ```n >= log2(n)^4```.
-For ```n < 2^16``` this is false.
+Given that `n >= |B|`, a sparse block can only exist if `n >= log2(n)^4`, which is false for `n < 2^16`. Therefore,
+for `n < 2^16`, all dense blocks need to store their offsets using `log2(log2(n)^4) + 1` bits.
+Since `n < 2^16 -> n < log2(n)^4`, we can use `log2(n) + 1` bits to store the offset, allowing us to use L2 Blocks
+directly and ignore L1 Blocks completely.
 
-Further more if ```n < 2^16``` all dense blocks need to store their offsets using ```log2(log2(n)^4) + 1``` bits.
-For ```n < 2^16 -> n < log2(n)^4``` and as we do not expect input beyond out bitvector we can simply
-us ```log2(n) + 1``` bits to store the offset. As the bits are also enough to store the absolute offset we can directly
-use the L2 Blocks and ignore L1 Blocks completely.
+---
 
-To utilise this I want to implement runtime analysis, that checks the size of the bitvector and only conditionally use
-L1 Blocks. To switch implementation at runtime we need function pointer (C Style) or virtual methods.
-As virtual methods have not that big of an overhead but do make the codebase much cleaner I will use a Select Base class
-and use the composite pattern to layer the logic of L1 and L2 Blocks.
+## Fuzz Testing against Reference implementation (Pasta)
 
-To achieve this another helper construct may come in handy: A BitVectorView.
-At the moment BitVectors are used by reference by the Rank and Select classes.
-This is suboptimal as this does not handle lifetime very well. Smart-pointer seem to be the right choice over all.
-But simply having a handle to the whole BitVector is to much at some points. If we want to handle a L2 case we might
-only need a part of the BitVector and handling relative offsets might get messy. Therefor I want to implement a
-BitVectorView.
-This Construct gets a shared_pointer to the real BitVector and handles the relative offset.
+The fuzz testing script in `scripts/fuzz_test.py` evaluates the correctness and robustness of a bitvector implementation
+by comparing its outputs with a reference implementation under various conditions.
 
-This also allows the feature that rank and select queries could only operate on a specific range.
-Even tho I don't see a use-case yet.
+**Execution Summary**:
 
-### Personal Thoughts
+1. **Setup and Compilation**:
+    - Configures the build environment with CMake.
+    - Compiles the bitvector executable.
 
-I know this report is not in the right format. But to be honest I did not had time to do it before today.
-The Template was not intuitively to me. So I decided to write my Report in markdown to at least have some content. I
-assume the content is more important but sorry for the inconvenience.
+2. **Test Case Generation**:
+    - Iterates 48 times, adjusting parameters for the number of operations and bitvector length.
+    - Generates a random bitvector and a set of random operations on it.
 
-This project was a lot of fun. MinMaxing 'simple' problems and finding simple solutions to hard problems is one of the
-things I like most in it. One of the downsides of this Project was time. Implementing benchmarks, tests and non-trivial
-algorithms takes time. Even tho I would not have liked a different project, but I hope the tutors will keep that in
-mind.
+3. **Execution of Test Cases**:
+    - Runs the generated operations using the bitvector implementation in `pasta` and `const` modes.
+    - Saves the results to temporary files.
 
-It is a shame that the ConstSelect is not fully implemented yet. It only supports layer 1 block offsets. 
+4. **Result Comparison**:
+    - Compares outputs from both modes line by line.
+    - Logs any discrepancies.
+
+The script automates the generation, execution, and validation of test cases, efficiently identifying inconsistencies
+and ensuring the robustness of the bitvector implementation.
+
+---
+
+## Personal Thoughts
+
+I acknowledge that this report is not in the expected format. Due to time constraints, I opted to write my report in
+markdown to ensure the content was complete. I hope the content is more important, and I apologize for any
+inconvenience.
+
+This project was highly enjoyable. I particularly enjoyed optimizing 'simple' problems and finding straightforward
+solutions to complex issues. However, time was a significant constraint, as implementing benchmarks, tests, and
+non-trivial algorithms is time-consuming. While I wouldn't have preferred a different project, I hope the tutors
+consider the time constraints.
+
+It is unfortunate that `ConstSelect` is not fully implemented yet and only supports layer 1 block offsets.
+
+---

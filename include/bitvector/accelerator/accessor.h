@@ -17,12 +17,12 @@ template<typename R = LinearRank, typename S = LinearSelect>
 class BitVectorAccessor
 {
 private:
-  std::shared_ptr<BitVector> m_bit_vector;
+  std::shared_ptr<CBitVector> m_bit_vector;
   R m_rank;
   S m_select;
 
 public:
-  explicit BitVectorAccessor(std::shared_ptr<BitVector> bit_vector)
+  explicit BitVectorAccessor(std::shared_ptr<CBitVector> bit_vector)
     : m_bit_vector(bit_vector)
     , m_rank(bit_vector)
     , m_select(std::move(bit_vector))

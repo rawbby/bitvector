@@ -13,10 +13,10 @@
 class LinearRank
 {
 private:
-  std::shared_ptr<BitVector> m_bit_vector;
+  std::shared_ptr<CBitVector> m_bit_vector;
 
 public:
-  explicit LinearRank(std::shared_ptr<BitVector> bit_vector)
+  explicit LinearRank(std::shared_ptr<CBitVector> bit_vector)
     : m_bit_vector(std::move(bit_vector))
   {
   }

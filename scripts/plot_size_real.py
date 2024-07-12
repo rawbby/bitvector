@@ -1,17 +1,20 @@
-import sys
+from os.path import abspath, dirname, join
 from subprocess import run, PIPE
 from tempfile import mktemp
-from os.path import abspath, dirname, join, exists
-from random import randint
+
 import matplotlib.pyplot as plt
 import numpy as np
 
+from util import generate
 
-def main(use_variation=0):
-    run(['cmake', '--build', abspath(join(dirname(__file__), 'cmake-build-release'))], check=True)
 
-    xpoints = []
-    ypoints = []
+def main(variations):
+    source_dir = abspath(join(dirname(__file__), '..'))
+    binary_dir = join(source_dir, 'cmake-build-debug')
+    executable = join(binary_dir, 'bitvector')
+
+    run(['cmake', '-S', source_dir, '-B', binary_dir, '-DINCLUDE_PASTA_BIT_VECTOR=ON'], check=True)
+    run(['cmake', '--build', binary_dir], check=True)
 
     def gen_exp(precision):
         for p in range(precision):
@@ -26,55 +29,35 @@ def main(use_variation=0):
             p = minimum + (k * (2 ** max_exponent))
             yield int(p)
 
+    test_paths = []
+    xpoints = []
     for i__ in sorted(list(set([_ for _ in gen()]))):
-        if i__ <= 1:
-            i__ = 2
+        i__ = max(2, i__)
+
+        test_path = mktemp('.txt')
 
         num_operations = 2
         len_bit_vector = i__
-
         probability = 50
 
-        test_path = mktemp('.txt')
-        result_linear = mktemp('.txt')
-        result_const = mktemp('.txt')
+        bitvector = generate(num_operations, len_bit_vector, probability)
+        with open(test_path, 'w') as f:
+            [f.write(_) for _ in bitvector]
 
-        if not exists(test_path):
-            with open(test_path, 'w') as f:
-                f.write(str(num_operations) + '\n')
-
-                num_ones = 0
-                num_zeroes = 0
-                while num_ones == 0 or num_zeroes == 0:
-                    bitvector = [1 if probability > randint(0, 100) else 0 for __ in range(len_bit_vector)]
-                    num_ones = sum(bitvector)
-                    num_zeroes = len(bitvector) - num_ones
-
-                for b in bitvector:
-                    f.write(str(b))
-                f.write('\n')
-
-                for __ in range(num_operations):
-                    op = randint(0, 4)
-                    if op == 1:
-                        f.write(f"rank 0 {str(randint(0, len(bitvector) - 1))}\n")
-                    elif op == 2:
-                        f.write(f"rank 1 {str(randint(0, len(bitvector) - 1))}\n")
-                    elif op == 3:
-                        f.write(f"select 0 {str(randint(0, num_zeroes - 1))}\n")
-                    elif op == 4:
-                        f.write(f"select 1 {str(randint(0, num_ones - 1))}\n")
-                    else:
-                        f.write(f"access {str(randint(0, len(bitvector) - 1))}\n")
-
-        result = run(['cmake-build-release/bitvector', test_path, result_const, *[str(_) for _ in range(use_variation)]],
-                     check=True, encoding='utf-8', stdout=PIPE)
-
-        space = int(result.stdout[result.stdout.find('space=') + 6:-1])
+        test_paths.append(test_path)
         xpoints.append(i__)
-        ypoints.append(space)
 
-    plt.plot(np.array(xpoints), np.array(ypoints))
+    for variation in variations:
+        result_path = mktemp('.txt')
+        ypoints = []
+        for test_path in test_paths:
+            result = run([executable, test_path, result_path, variation],
+                         check=True, encoding='utf-8', stdout=PIPE)
+
+            space = int(result.stdout[result.stdout.find('space=') + 6:-1])
+            ypoints.append(space)
+
+        plt.plot(np.array(xpoints), np.array(ypoints))
 
 
 if __name__ == '__main__':
@@ -82,7 +65,13 @@ if __name__ == '__main__':
     plt.xlabel("BitVector Length")
     plt.ylabel("Total Bits Allocated")
 
-    [main(_) for _ in range(3)]
+    main(['linear', 'const', 'pasta'])
+    plt.legend(['LinearRank LinearSelect', 'ConstRank BetterSelect', 'PastaRank PastaSelect'])
 
-    plt.legend(['ConstRank LinearSelect', 'LinearRank LinearSelect', 'ConstRank ConstSelectPart'])
-    plt.savefig('bitvector-sizes-all.png')
+    ax = plt.gca()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+
+    fig = plt.gcf()
+    fig.set_size_inches(11.7, 8.3)
+    fig.savefig('bitvector-sizes-all.png', dpi=192)

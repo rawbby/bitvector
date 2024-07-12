@@ -13,6 +13,15 @@ constexpr inline bool IsConstexprLambda(Lambda){return true;}
 constexpr inline bool IsConstexprLambda(...){return false;}
 // clang-format on
 
+// ensure DEBUG and NDEBUG (not DEBUG) is set properly ...
+#if defined(_DEBUG) || defined(DEBUG) || !defined(NDEBUG)
+#undef NDEBUG
+#define DEBUG
+#else
+#define NDEBUG
+#undef DEBUG
+#endif
+
 inline void
 AssertionExit(const char* msg)
 {
@@ -27,5 +36,11 @@ AssertionExit(const char* msg)
   if (!(COND))                                                                                                                                                                     \
     AssertionExit("Assertion \"" #COND "\" failed at " __FILE__ ":" MACRO_STRINGIFY(__LINE__) "!");                                                                                \
   ((void)0)
+
+#ifdef DEBUG
+#define DEBUG_ASSERT(COND) ASSERT(COND)
+#else
+#define DEBUG_ASSERT(COND) ((void)0)
+#endif
 
 #endif

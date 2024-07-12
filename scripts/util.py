@@ -31,25 +31,36 @@ def generate(num_operations: Union[int, Tuple[int, int]], len_bit_vector: Union[
     num_zeroes = len(bitvector) - num_ones
 
     if num_ones == 0:
-        bitvector[randint(0, len(bitvector) - 1)] = 0
+        bitvector[randint(0, len(bitvector) - 1)] = 1
         num_ones = 1
     if num_zeroes == 0:
-        bitvector[randint(0, len(bitvector) - 1)] = 1
+        bitvector[randint(0, len(bitvector) - 1)] = 0
         num_zeroes = 1
 
     [write(str(b)) for b in bitvector]
     write('\n')
 
-    for _ in range(num_operations):
+    write(f"rank 0 0\n")
+    write(f"rank 0 {len(bitvector) - 1}\n")
+    write(f"rank 1 0\n")
+    write(f"rank 1 {len(bitvector) - 1}\n")
+    write(f"select 0 1\n")
+    write(f"select 0 {num_zeroes}\n")
+    write(f"select 1 1\n")
+    write(f"select 1 {num_ones}\n")
+    write(f"access 0\n")
+    write(f"access {len(bitvector) - 1}\n")
+
+    for _ in range(max(10, num_operations)):
         op = randint(0, 4)
         if op == 1:
             write(f"rank 0 {randint(0, len(bitvector) - 1)}\n")
         elif op == 2:
             write(f"rank 1 {randint(0, len(bitvector) - 1)}\n")
         elif op == 3:
-            write(f"select 0 {randint(1, num_zeroes - 1)}\n")
+            write(f"select 0 {randint(1, num_zeroes)}\n")
         elif op == 4:
-            write(f"select 1 {randint(1, num_ones - 1)}\n")
+            write(f"select 1 {randint(1, num_ones)}\n")
         else:
             write(f"access {randint(0, len(bitvector) - 1)}\n")
 

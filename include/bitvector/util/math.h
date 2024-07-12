@@ -43,15 +43,15 @@ Pow4(std::size_t n)
 }
 
 std::size_t
-Log2(std::size_t n)
-{
-  return std::bit_width(n) - 1;
-}
-
-std::size_t
 BitWidth(std::size_t n)
 {
   return std::bit_width(n);
+}
+
+std::size_t
+Log2(std::size_t n)
+{
+  return BitWidth(n) - 1;
 }
 
 std::size_t

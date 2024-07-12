@@ -3,7 +3,6 @@
 
 #include "../bitsvector.h"
 #include "../bitvector.h"
-#include "../bitvector_view.h"
 #include "../traits.h"
 
 #include <cstdint>
@@ -46,12 +45,12 @@ private:
       s_block_elem_size = BitWidth(n);          // calculate the bits needed for relative offset
     }
   } sizes;
-  std::shared_ptr<BitVector> bit_vector;
+  std::shared_ptr<CBitVector> bit_vector;
   BitsVector s_blocks;
   BitsVector blocks;
 
 public:
-  explicit ConstRank(std::shared_ptr<BitVector> bit_vector)
+  explicit ConstRank(std::shared_ptr<CBitVector> bit_vector)
     : bit_vector(std::move(bit_vector))
     , sizes(bit_vector->size())
     , s_blocks(sizes.s_block_elem_size)

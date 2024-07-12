@@ -1,6 +1,6 @@
 #include <bitvector/accelerator/accessor.h>
+#include <bitvector/accelerator/better_select.h>
 #include <bitvector/accelerator/const_rank.h>
-#include <bitvector/accelerator/const_select.h>
 #include <bitvector/accelerator/linear_rank.h>
 #include <bitvector/accelerator/linear_select.h>
 #include <bitvector/bitvector.h>
@@ -143,7 +143,7 @@ main(int argc, char** argv)
       bench<BitVectorAccessor<LinearRank, LinearSelect>>(in, out);
     }
     if (x == "const") {
-      bench<BitVectorAccessor<ConstRank, ConstSelect>>(in, out);
+      bench<BitVectorAccessor<ConstRank, BetterSelect>>(in, out);
     }
 #ifdef INCLUDE_PASTA_BIT_VECTOR
     if (x == "pasta") {
@@ -151,6 +151,6 @@ main(int argc, char** argv)
     }
 #endif
   } else {
-    bench<BitVectorAccessor<ConstRank, ConstSelect>>(in, out);
+    bench<BitVectorAccessor<ConstRank, BetterSelect>>(in, out);
   }
 }
